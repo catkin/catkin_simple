@@ -4,7 +4,7 @@ catkin simple
 This ``catkin`` package is designed to make the `CMakeLists.txt` of other ``catkin`` packages simpler.
 
 CMakeLists.txt Example
-======================
+----------------------
 
 Here is an example of a package ``foo`` which depends on other catkin packages::
 
@@ -41,7 +41,7 @@ Next comes the ``find_package`` of ``catkin_simple``::
 
 This is just like ``find_package`` for any other ``catkin`` package. This command is required.
 
-Then you invoke ``catkin_simple``
+Then you invoke ``catkin_simple``::
 
     catkin_simple()
 
@@ -70,7 +70,7 @@ Next we install everything::
 
     cs_install_script(scripts/my_script.py)
 
-The first macro call creates installation rule for any libraries and executables you created with ``cs_`` prefixed commands. That call can also take zero to many additional targets you wish to install which were created without the ``cs_`` prefixed commands. This command is optional.
+The first macro call creates an installation rule for any libraries and executables you created with ``cs_`` prefixed commands. That call can also take zero to many additional targets you wish to install which were created without the ``cs_`` prefixed commands. This command is optional.
 
 The second macro call creates an installation rule for the given script, installing it to ``${prefix}/lib/${pkg_name}/``. This command is optional.
 
@@ -78,4 +78,13 @@ Finally, we export everything::
 
     cs_export()
 
-This command calls ``catkin_package(...)`` under the hood, extending that call with any libraries and catkin_depends created/found automatically with ``catkin_simple``. You can also pass in your own arguments to ``catkin_package(...)`` through this command. This command is required.
+This command calls ``catkin_package(...)`` under the hood, extending that call with any libraries created and catkin_depends found automatically with ``catkin_simple``. You can also pass in your own arguments to ``catkin_package(...)`` through this command. This command is required.
+
+Known Limitations
+-----------------
+
+There are several known assumptions and incorrect behaviors in ``catkin_simple`` which are a result of the trade-off of correctness for convenience.
+
+- There is no warning when a catkin package is not found during ``find_package``.
+- There is over linking, as all libraries of all dependencies are linked against all targets indiscriminately.
+- Assumes that the ``include`` folder is meant to be in the include path.
