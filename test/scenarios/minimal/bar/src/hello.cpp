@@ -11,6 +11,5 @@ inline void print_hello() {
 
 void hello() {
     boost::thread t(print_hello);
-    t.start_thread();
     t.join();
 }
