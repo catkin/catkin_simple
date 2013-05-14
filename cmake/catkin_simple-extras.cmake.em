@@ -20,13 +20,20 @@ macro(catkin_simple)
   set(${PROJECT_NAME}_LIBRARIES )
 
   find_package(catkin REQUIRED)
+  # call catkin_package_xml() if it has not been called before
+  if(NOT _CATKIN_CURRENT_PACKAGE)
+    catkin_package_xml()
+  endif()
 
-  # Parse the raw package.xml for catkin_depends
-  execute_process(COMMAND ${PYTHON_EXECUTABLE}
-    ${catkin_simple_CMAKE_DIR}/parse_package_xml.py
-    ${CMAKE_CURRENT_SOURCE_DIR}/package.xml
-    OUTPUT_VARIABLE ${PROJECT_NAME}_CATKIN_DEPENDS
-  )
+  set(${PROJECT_NAME}_CATKIN_DEPENDS )
+  foreach(dep ${${PROJECT_NAME}_BUILD_DEPENDS})
+    find_package(${dep} QUIET)
+    if(${dep}_FOUND_CATKIN_PROJECT)
+      list(APPEND ${PROJECT_NAME}_CATKIN_DEPENDS ${dep})
+    endif()
+  endforeach()
+
+  # Let find_package(catkin ...) do the heavy lifting
   find_package(catkin REQUIRED COMPONENTS ${${PROJECT_NAME}_CATKIN_DEPENDS})
   include_directories(include ${catkin_INCLUDE_DIRS})
 
@@ -47,10 +54,9 @@ macro(cs_add_library)
 
 endmacro()
 
-macro(cs_install)
+macro(cs_install additional_targets)
   # Install targets (exec's and lib's)
-  message("CATKIN_PACKAGE_LIB_DESTINATION: ${CATKIN_PACKAGE_LIB_DESTINATION}")
-  install(TARGETS ${${PROJECT_NAME}_TARGETS} ${ARGN}
+  install(TARGETS ${${PROJECT_NAME}_TARGETS} ${additional_targets}
     ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -67,11 +73,15 @@ macro(cs_install_script script)
 endmacro()
 
 macro(cs_export)
-  # TODO: allow extension of parameters to catkin_package
+  cmake_parse_arguments(CS_PROJECT
+    "" "" "INCLUDE_DIRS;LIBRARIES;CATKIN_DEPENDS;DEPENDS;CFG_EXTRAS"
+    ${ARGN})
   catkin_package(
-    INCLUDE_DIRS include
-    LIBRARIES ${${PROJECT_NAME}_LIBRARIES}
-    CATKIN_DEPENDS ${${PROJECT_NAME}_CATKIN_DEPENDS}
+    INCLUDE_DIRS include ${CS_PROJECT_INCLUDE_DIRS}
+    LIBRARIES ${${PROJECT_NAME}_LIBRARIES} ${CS_PROJECT_LIBRARIES}
+    CATKIN_DEPENDS ${${PROJECT_NAME}_CATKIN_DEPENDS} ${CS_PROJECT_CATKIN_DEPENDS}
+    DEPENDS ${CS_PROJECT_CATKIN_DEPENDS}
+    CFG_EXTRAS ${CS_PROJECT_CFG_EXTRAS}
   )
 
 endmacro()
