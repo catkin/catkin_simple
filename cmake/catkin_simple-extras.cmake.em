@@ -21,8 +21,6 @@ macro(catkin_simple)
 
   find_package(catkin REQUIRED)
 
-  message("${PROJECT_NAME}_BUILD_DEPENDS: ${${PROJECT_NAME}_BUILD_DEPENDS}")
-
   # Parse the raw package.xml for catkin_depends
   execute_process(COMMAND ${PYTHON_EXECUTABLE}
     ${catkin_simple_CMAKE_DIR}/parse_package_xml.py
@@ -49,9 +47,10 @@ macro(cs_add_library)
 
 endmacro()
 
-macro(cs_install additional_targets)
+macro(cs_install)
   # Install targets (exec's and lib's)
-  install(TARGETS ${${PROJECT_NAME}_TARGETS} ${additional_targets}
+  message("CATKIN_PACKAGE_LIB_DESTINATION: ${CATKIN_PACKAGE_LIB_DESTINATION}")
+  install(TARGETS ${${PROJECT_NAME}_TARGETS} ${ARGN}
     ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
