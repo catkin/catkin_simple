@@ -35,7 +35,11 @@ macro(catkin_simple)
 
   # Let find_package(catkin ...) do the heavy lifting
   find_package(catkin REQUIRED COMPONENTS ${${PROJECT_NAME}_CATKIN_DEPENDS})
-  include_directories(include ${catkin_INCLUDE_DIRS})
+  set(${PROJECT_NAME}_LOCAL_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
+  if(NOT IS_DIRECTORY ${${PROJECT_NAME}_LOCAL_INCLUDE_DIR})
+    set(${PROJECT_NAME}_LOCAL_INCLUDE_DIR )
+  endif()
+  include_directories(${${PROJECT_NAME}_LOCAL_INCLUDE_DIR} ${catkin_INCLUDE_DIRS})
 
 endmacro()
 
@@ -54,18 +58,20 @@ macro(cs_add_library)
 
 endmacro()
 
-macro(cs_install additional_targets)
+macro(cs_install)
   # Install targets (exec's and lib's)
-  install(TARGETS ${${PROJECT_NAME}_TARGETS} ${additional_targets}
+  install(TARGETS ${${PROJECT_NAME}_TARGETS} ${ARGN}
     ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
   )
-  # Install include directory
-  install(DIRECTORY include/
-    DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-    FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp"
-  )
+  if(${${PROJECT_NAME}_LOCAL_INCLUDE_DIR})
+    # Install include directory
+    install(DIRECTORY ${${PROJECT_NAME}_LOCAL_INCLUDE_DIR}/
+      DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+      FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp"
+    )
+  endif()
 endmacro()
 
 macro(cs_install_script script)
@@ -77,7 +83,7 @@ macro(cs_export)
     "" "" "INCLUDE_DIRS;LIBRARIES;CATKIN_DEPENDS;DEPENDS;CFG_EXTRAS"
     ${ARGN})
   catkin_package(
-    INCLUDE_DIRS include ${CS_PROJECT_INCLUDE_DIRS}
+    INCLUDE_DIRS ${${PROJECT_NAME}_LOCAL_INCLUDE_DIR} ${CS_PROJECT_INCLUDE_DIRS}
     LIBRARIES ${${PROJECT_NAME}_LIBRARIES} ${CS_PROJECT_LIBRARIES}
     CATKIN_DEPENDS ${${PROJECT_NAME}_CATKIN_DEPENDS} ${CS_PROJECT_CATKIN_DEPENDS}
     DEPENDS ${CS_PROJECT_CATKIN_DEPENDS}
