@@ -49,6 +49,24 @@ macro(cs_add_library)
 
 endmacro()
 
+macro(cs_install additional_targets)
+  # Install targets (exec's and lib's)
+  install(TARGETS ${${PROJECT_NAME}_TARGETS} ${additional_targets}
+    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  )
+  # Install include directory
+  install(DIRECTORY include/
+    DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+    FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp"
+  )
+endmacro()
+
+macro(cs_install_script script)
+  install(PROGRAMS ${script} DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+endmacro()
+
 macro(cs_export)
   # TODO: allow extension of parameters to catkin_package
   catkin_package(

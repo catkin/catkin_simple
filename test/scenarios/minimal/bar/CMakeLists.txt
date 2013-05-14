@@ -12,4 +12,6 @@ catkin_simple()
 cs_add_library(bar src/hello.cpp)
 target_link_libraries(bar ${Boost_LIBRARIES})
 
+cs_install()
+
 cs_export()
