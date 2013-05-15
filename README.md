@@ -69,7 +69,7 @@ Next we create a library:
 cs_add_library(my_lib src/my_lib.cpp)
 ```
 
-This call does a few things, first it calls directly through to the normal CMake macro `add_library`, then it calls `target_link_libraries(my_lib ${catkin_LIBRARIES})` to link your new library against any catkin libraries you have build depended on in your package.xml. Finally it does some bookeeping so that your library target can be implicitly used later.
+This call does a few things, first it calls directly through to the normal CMake macro `add_library`, then it calls `target_link_libraries(my_lib ${catkin_LIBRARIES})` to link your new library against any catkin libraries you have build depended on in your package.xml. Finally it does some bookkeeping so that your library target can be implicitly used later.
 
 ### cs_add_executable()
 
@@ -115,3 +115,5 @@ There are several known assumptions and incorrect behaviors in `catkin_simple` w
 * There is no warning when a catkin package is not found during `find_package`.
 * There is over linking, as all libraries of all dependencies are linked against all targets indiscriminately.
 * Assumes that the `include` folder is meant to be in the include path.
+* If new .msg or .srv files are added, they will not be detected until you force CMake to run again
+* All targets have a target dependency on any downstream message generation, which results in sub-optimal parallelization of targets, as there are unnecessary dependencies created.
