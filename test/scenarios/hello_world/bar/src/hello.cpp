@@ -1,4 +1,5 @@
 #include <bar/hello.h>
+#include <bar/HeaderString.h>
 
 #include <iostream>
 
