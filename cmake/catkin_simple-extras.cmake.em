@@ -69,6 +69,7 @@ macro(cs_install)
     install(DIRECTORY ${${PROJECT_NAME}_LOCAL_INCLUDE_DIR}/
       DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
       FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp"
+      PATTERN ".svn" EXCLUDE
     )
   endif()
 endmacro()
