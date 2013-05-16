@@ -91,7 +91,7 @@ Next we install everything:
 ```cmake
 cs_install()
 
-cs_install_script(scripts/my_script.py)
+cs_install_scripts(scripts/my_script.py)
 ```
 
 The first macro call creates an installation rule for any libraries and executables you created with `cs_` prefixed commands. That call can also take zero to many additional targets you wish to install which were created without the `cs_` prefixed commands. This command is optional.
