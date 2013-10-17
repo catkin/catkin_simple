@@ -16,6 +16,10 @@ set(catkin_simple_CMAKE_DIR "@(PKG_CMAKE_DIR)")
 @[end if]@
 
 macro(catkin_simple)
+  if(TARGET ${PROJECT_NAME})
+    message(FATAL_ERROR "Could not create target for project ${PROJECT_NAME}, as it already exists.")
+  endif()
+  add_custom_target(${PROJECT_NAME})
   set(${PROJECT_NAME}_TARGETS)
   set(${PROJECT_NAME}_LIBRARIES)
 
@@ -83,22 +87,54 @@ macro(catkin_simple)
   endif()
 endmacro()
 
+macro(cs_add_target)
+  add_dependencies(${PROJECT_NAME} ${ARGV0})
+endmacro()
+
 macro(cs_add_executable)
-  list(APPEND ${PROJECT_NAME}_TARGETS ${ARGV0})
-  add_executable(${ARGN})
-  target_link_libraries(${ARGV0} ${catkin_LIBRARIES})
-  if(NOT "${${PROJECT_NAME}_CATKIN_BUILD_DEPENDS_EXPORTED_TARGETS}" STREQUAL "")
-    add_dependencies(${ARGV0} ${${PROJECT_NAME}_CATKIN_BUILD_DEPENDS_EXPORTED_TARGETS})
+  if(${ARGV0} STREQUAL ${PROJECT_NAME})
+    # Copy the ARGN list
+    set(_${PROJECT_NAME}_${ARGV0}_new_args ${ARGN})
+    # Remove the first element (target name)
+    list(REMOVE_AT _${PROJECT_NAME}_${ARGV0}_new_args 0)
+    # Insert new target name at beginning
+    list(INSERT _${PROJECT_NAME}_${ARGV0}_new_args 0 ${PROJECT_NAME}_exec)
+    # Call cs_add_executable with new arguments
+    cs_add_executable(${_${PROJECT_NAME}_${ARGV0}_new_args})
+    # Fix the output name
+    set_target_properties(${PROJECT_NAME}_exec PROPERTIES OUTPUT_NAME ${PROJECT_NAME})
+  else()
+    list(APPEND ${PROJECT_NAME}_TARGETS ${ARGV0})
+    add_executable(${ARGN})
+    target_link_libraries(${ARGV0} ${catkin_LIBRARIES})
+    if(NOT "${${PROJECT_NAME}_CATKIN_BUILD_DEPENDS_EXPORTED_TARGETS}" STREQUAL "")
+      add_dependencies(${ARGV0} ${${PROJECT_NAME}_CATKIN_BUILD_DEPENDS_EXPORTED_TARGETS})
+    endif()
+    cs_add_target(${ARGV0})
   endif()
 endmacro()
 
 macro(cs_add_library)
-  list(APPEND ${PROJECT_NAME}_TARGETS ${ARGV0})
-  list(APPEND ${PROJECT_NAME}_LIBRARIES ${ARGV0})
-  add_library(${ARGN})
-  target_link_libraries(${ARGV0} ${catkin_LIBRARIES})
-  if(NOT "${${PROJECT_NAME}_CATKIN_BUILD_DEPENDS_EXPORTED_TARGETS}" STREQUAL "")
-    add_dependencies(${ARGV0} ${${PROJECT_NAME}_CATKIN_BUILD_DEPENDS_EXPORTED_TARGETS})
+  if(${ARGV0} STREQUAL ${PROJECT_NAME})
+    # Copy the ARGN list
+    set(_${PROJECT_NAME}_${ARGV0}_new_args ${ARGN})
+    # Remove the first element (target name)
+    list(REMOVE_AT _${PROJECT_NAME}_${ARGV0}_new_args 0)
+    # Insert new target name at beginning
+    list(INSERT _${PROJECT_NAME}_${ARGV0}_new_args 0 ${PROJECT_NAME}_lib)
+    # Call cs_add_library with new arguments
+    cs_add_library(${_${PROJECT_NAME}_${ARGV0}_new_args})
+    # Fix the output name
+    set_target_properties(${PROJECT_NAME}_exec PROPERTIES OUTPUT_NAME ${PROJECT_NAME})
+  else()
+    list(APPEND ${PROJECT_NAME}_TARGETS ${ARGV0})
+    list(APPEND ${PROJECT_NAME}_LIBRARIES ${ARGV0})
+    add_library(${ARGN})
+    target_link_libraries(${ARGV0} ${catkin_LIBRARIES})
+    if(NOT "${${PROJECT_NAME}_CATKIN_BUILD_DEPENDS_EXPORTED_TARGETS}" STREQUAL "")
+      add_dependencies(${ARGV0} ${${PROJECT_NAME}_CATKIN_BUILD_DEPENDS_EXPORTED_TARGETS})
+    endif()
+    cs_add_target(${ARGV0})
   endif()
 endmacro()
 
