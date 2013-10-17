@@ -3,4 +3,7 @@ project(catkin_simple)
 
 find_package(catkin REQUIRED)
 
-catkin_package(CFG_EXTRAS catkin_simple-extras.cmake)
+catkin_package(
+  CATKIN_DEPENDS catkin
+  CFG_EXTRAS catkin_simple-extras.cmake
+)
