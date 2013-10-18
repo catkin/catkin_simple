@@ -125,7 +125,7 @@ macro(cs_add_library)
     # Call cs_add_library with new arguments
     cs_add_library(${_${PROJECT_NAME}_${ARGV0}_new_args})
     # Fix the output name
-    set_target_properties(${PROJECT_NAME}_exec PROPERTIES OUTPUT_NAME ${PROJECT_NAME})
+    set_target_properties(${PROJECT_NAME}_lib PROPERTIES OUTPUT_NAME ${PROJECT_NAME})
   else()
     list(APPEND ${PROJECT_NAME}_TARGETS ${ARGV0})
     list(APPEND ${PROJECT_NAME}_LIBRARIES ${ARGV0})
