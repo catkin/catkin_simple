@@ -59,7 +59,7 @@ Packages which are successfully found and identified to be `catkin` packages are
 
 Next, this macro adds the local `include` folder and any `catkin` include directories to the include path with CMake's `include_directories(...)` macro, but the local `include` folder is only added if it exists.
 
-Finally, this macro will discover and build any ROS messages and services which reside in the `msg` and `srv` folders, respectively. The automatic discovery and building of messages/services is only done if your package `build_depend`'s on `message_generation`, and message generation will complain if your package does not run_depend on `message_runtime`.
+Finally, this macro will discover and build any ROS messages, services, and actions which reside in the `msg`, `srv`, action `action` folders, respectively. The automatic discovery and building of messages/services is only done if your package `build_depend`'s on `message_generation`, and message generation will complain if your package does not run_depend on `message_runtime`.
 
 ### cs_add_library()
 
