@@ -49,9 +49,19 @@ macro(catkin_simple)
   endif()
   include_directories(${${PROJECT_NAME}_LOCAL_INCLUDE_DIR} ${catkin_INCLUDE_DIRS})
 
-  # perform msg/srv generation if necessary
+  # perform action/msg/srv generation if necessary
   if(message_generation_FOUND_CATKIN_PROJECT)
     set(${PROJECT_NAME}_DO_MESSAGE_GENERATION FALSE)
+    # add action files if available
+    set(${PROJECT_NAME}_LOCAL_ACTION_DIR ${CMAKE_CURRENT_SOURCE_DIR}/action)
+    if(NOT IS_DIRECTORY ${${PROJECT_NAME}_LOCAL_ACTION_DIR})
+      set(${PROJECT_NAME}_LOCAL_ACTION_DIR)
+    endif()
+    if(${PROJECT_NAME}_LOCAL_ACTION_DIR)
+      add_action_files(DIRECTORY action)
+      set(${PROJECT_NAME}_DO_MESSAGE_GENERATION TRUE)
+    endif()
+
     # add message files if available
     set(${PROJECT_NAME}_LOCAL_MSG_DIR ${CMAKE_CURRENT_SOURCE_DIR}/msg)
     if(NOT IS_DIRECTORY ${${PROJECT_NAME}_LOCAL_MSG_DIR})
@@ -61,6 +71,7 @@ macro(catkin_simple)
       add_message_files(DIRECTORY msg)
       set(${PROJECT_NAME}_DO_MESSAGE_GENERATION TRUE)
     endif()
+
     # add service files if available
     set(${PROJECT_NAME}_LOCAL_SRV_DIR ${CMAKE_CURRENT_SOURCE_DIR}/srv)
     if(NOT IS_DIRECTORY ${${PROJECT_NAME}_LOCAL_SRV_DIR})
@@ -70,6 +81,7 @@ macro(catkin_simple)
       add_service_files(DIRECTORY srv)
       set(${PROJECT_NAME}_DO_MESSAGE_GENERATION TRUE)
     endif()
+
     # generate messages if necessary
     if(${PROJECT_NAME}_DO_MESSAGE_GENERATION)
       # identify all build dependencies which contain messages
