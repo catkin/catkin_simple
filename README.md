@@ -21,7 +21,7 @@ target_link_libraries(my_exec my_lib)
 
 cs_install()
 
-cs_install_script(scripts/my_script.py)
+cs_install_scripts(scripts/my_script.py)
 
 cs_export()
 ```
