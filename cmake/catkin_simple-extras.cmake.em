@@ -16,6 +16,11 @@ set(catkin_simple_CMAKE_DIR "@(PKG_CMAKE_DIR)")
 @[end if]@
 
 macro(catkin_simple)
+  # Arguments
+  # ALL_DEPS_REQUIRED -- Add the "REQIUIRED" flag when calling
+  #                      FIND_PACKAGE() for each dependency
+  cmake_parse_arguments(cs_args "ALL_DEPS_REQUIRED" "" "" ${ARGN})
+
   if(TARGET ${PROJECT_NAME}_package)
     message(WARNING "Could not create target '${${PROJECT_NAME}_package}' for project ${PROJECT_NAME}, as it already exists.")
   endif()
@@ -32,7 +37,14 @@ macro(catkin_simple)
   set(${PROJECT_NAME}_CATKIN_BUILD_DEPENDS)
   set(${PROJECT_NAME}_CATKIN_BUILD_DEPENDS_EXPORTED_TARGETS)
   foreach(dep ${${PROJECT_NAME}_BUILD_DEPENDS})
-    find_package(${dep} QUIET)
+    # If this flag is defined, add the "REQUIRED" flag
+    # to all FIND_PACKAGE calls
+    if(cs_args_ALL_DEPS_REQUIRED)
+      find_package(${dep} REQUIRED)
+    else()
+      find_package(${dep} QUIET)      
+    endif()
+
     if(${dep}_FOUND_CATKIN_PROJECT)
       list(APPEND ${PROJECT_NAME}_CATKIN_BUILD_DEPENDS ${dep})
       list(APPEND ${PROJECT_NAME}_CATKIN_BUILD_DEPENDS_EXPORTED_TARGETS ${${dep}_EXPORTED_TARGETS})
