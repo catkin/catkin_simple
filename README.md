@@ -53,7 +53,9 @@ Then you invoke `catkin_simple`:
 catkin_simple()
 ```
 
-This macro call gathers your `build_depend`'s from the `package.xml` of your package. Then does a `find_package(...)` on each of them, each with the `QUIET` option and without the `REQUIRES` option. That way if any of the build_depend's are not `catkin` packages then they are simply ignored. This means that if you depend on a `caktin` package which is not on your system, `catkin_simple` will not warn you about this, because there is no way to know if it is a missing `catkin` package or a system dependency.
+This macro call gathers your `build_depend`'s from the `package.xml` of your package, then does a `find_package(...)` on each of them. 
+
+By default, `find_package(...)` is called with the `QUIET` option and without the `REQUIRED` option. That way, if any of the build_depend's are not `catkin` packages then they are simply ignored. This means that if you depend on a `caktin` package which is not on your system, `catkin_simple` will not warn you about this, because there is no way to know if it is a missing `catkin` package or a system dependency. If this is not the desired behaviour, calling `catkin_simple(ALL_DEPS_REQUIRED)` will call `find_package(...)` on each dependency *with* the `REQUIRED` option.
 
 Packages which are successfully found and identified to be `catkin` packages are added to a list of "catkin build dependencies" for your package. This list of build dependencies is passed to `find_package(catkin REQUIRED COMPONENTS ...)`. This command is required.
 
