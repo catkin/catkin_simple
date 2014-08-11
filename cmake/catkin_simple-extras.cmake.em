@@ -40,12 +40,11 @@ macro(catkin_simple)
     # If this flag is defined, add the "REQUIRED" flag
     # to all FIND_PACKAGE calls
     if(cs_args_ALL_DEPS_REQUIRED)
-        find_package(${dep} REQUIRED)
+      find_package(${dep} REQUIRED)
     else()
-        find_package(${dep} QUIET)      
+      find_package(${dep} QUIET)      
     endif()
 
-    find_package(${dep} QUIET)
     if(${dep}_FOUND_CATKIN_PROJECT)
       list(APPEND ${PROJECT_NAME}_CATKIN_BUILD_DEPENDS ${dep})
       list(APPEND ${PROJECT_NAME}_CATKIN_BUILD_DEPENDS_EXPORTED_TARGETS ${${dep}_EXPORTED_TARGETS})
