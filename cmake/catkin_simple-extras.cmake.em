@@ -168,6 +168,13 @@ macro(cs_install)
       PATTERN ".svn" EXCLUDE
     )
   endif()
+  if(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/launch)
+    # Install launch files
+    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/launch/
+      DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
+      FILES_MATCHING PATTERN "*.launch"
+    )
+  endif()
 endmacro()
 
 macro(cs_install_scripts)
