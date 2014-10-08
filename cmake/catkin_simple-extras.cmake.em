@@ -168,13 +168,15 @@ macro(cs_install)
       PATTERN ".svn" EXCLUDE
     )
   endif()
-  if(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/launch)
-    # Install launch files
-    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/launch/
-      DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
-      FILES_MATCHING PATTERN "*.launch"
-    )
-  endif()
+  # Install shared content located in commonly used folders
+  set(_shared_content_folders launch rviz urdf meshes maps worlds media param)
+  foreach(_folder ${_shared_content_folders})
+    if(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${_folder})
+      install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${_folder}/
+        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/${_folder}
+      )
+    endif()
+  endforeach()
 endmacro()
 
 macro(cs_install_scripts)
