@@ -155,6 +155,10 @@ endmacro()
 
 macro(cs_install)
   # Install targets (exec's and lib's)
+  foreach(_target ${${PROJECT_NAME}_TARGETS})
+    get_target_property(${_target}_type ${_target} TYPE)
+    message(STATUS "Marking ${${_target}_type} \"${_target}\" of package \"${PROJECT_NAME}\" for installation")
+  endforeach()
   install(TARGETS ${${PROJECT_NAME}_TARGETS} ${ARGN}
     ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
@@ -162,12 +166,23 @@ macro(cs_install)
   )
   if(EXISTS ${${PROJECT_NAME}_LOCAL_INCLUDE_DIR})
     # Install include directory
+    message(STATUS "Marking HEADER FILES in \"include\" folder of package \"${PROJECT_NAME}\" for installation")
     install(DIRECTORY ${${PROJECT_NAME}_LOCAL_INCLUDE_DIR}/
       DESTINATION ${CATKIN_GLOBAL_INCLUDE_DESTINATION}
       FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp"
       PATTERN ".svn" EXCLUDE
     )
   endif()
+  # Install shared content located in commonly used folders
+  set(_shared_content_folders launch rviz urdf meshes maps worlds media param)
+  foreach(_folder ${_shared_content_folders})
+    if(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${_folder})
+      message(STATUS "Marking SHARED CONTENT FOLDER \"${_folder}\" of package \"${PROJECT_NAME}\" for installation")
+      install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${_folder}/
+        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/${_folder}
+      )
+    endif()
+  endforeach()
 endmacro()
 
 macro(cs_install_scripts)
