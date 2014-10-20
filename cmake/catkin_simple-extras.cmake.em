@@ -42,7 +42,7 @@ macro(catkin_simple)
     if(cs_args_ALL_DEPS_REQUIRED)
       find_package(${dep} REQUIRED)
     else()
-      find_package(${dep} QUIET)      
+      find_package(${dep} QUIET)
     endif()
 
     if(${dep}_FOUND_CATKIN_PROJECT)
