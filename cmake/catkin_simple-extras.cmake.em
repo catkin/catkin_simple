@@ -174,7 +174,7 @@ macro(cs_install)
     )
   endif()
   # Install shared content located in commonly used folders
-  set(_shared_content_folders launch rviz urdf meshes maps worlds media param)
+  set(_shared_content_folders launch rviz urdf meshes maps worlds Media param)
   foreach(_folder ${_shared_content_folders})
     if(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${_folder})
       message(STATUS "Marking SHARED CONTENT FOLDER \"${_folder}\" of package \"${PROJECT_NAME}\" for installation")
