@@ -17,7 +17,7 @@ set(catkin_simple_CMAKE_DIR "@(PKG_CMAKE_DIR)")
 
 macro(catkin_simple)
   # Arguments
-  # ALL_DEPS_REQUIRED -- Add the "REQIUIRED" flag when calling
+  # ALL_DEPS_REQUIRED -- Add the "REQUIRED" flag when calling
   #                      FIND_PACKAGE() for each dependency
   cmake_parse_arguments(cs_args "ALL_DEPS_REQUIRED" "" "" ${ARGN})
 
