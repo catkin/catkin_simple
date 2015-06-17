@@ -114,13 +114,13 @@ macro(catkin_simple)
   if(dynamic_reconfigure_FOUND_CATKIN_PROJECT)
     set(${PROJECT_NAME}_LOCAL_CFG_DIR ${CMAKE_CURRENT_SOURCE_DIR}/cfg)
     if(IS_DIRECTORY ${${PROJECT_NAME}_LOCAL_CFG_DIR})
-        # create a list containing all the cfg files
-        file(GLOB ${PROJECT_NAME}_LOCAL_CFG_FILES RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${${PROJECT_NAME}_LOCAL_CFG_DIR}/*.cfg")
-        if(${PROJECT_NAME}_LOCAL_CFG_FILES)
-            generate_dynamic_reconfigure_options(${${PROJECT_NAME}_LOCAL_CFG_FILES})
-            # add build dep on gencfg
-            list(APPEND ${PROJECT_NAME}_CATKIN_BUILD_DEPENDS_EXPORTED_TARGETS ${PROJECT_NAME}_gencfg)
-        endif()
+      # create a list containing all the cfg files
+      file(GLOB ${PROJECT_NAME}_LOCAL_CFG_FILES RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${${PROJECT_NAME}_LOCAL_CFG_DIR}/*.cfg")
+      if(${PROJECT_NAME}_LOCAL_CFG_FILES)
+        generate_dynamic_reconfigure_options(${${PROJECT_NAME}_LOCAL_CFG_FILES})
+        # add build dep on gencfg
+        list(APPEND ${PROJECT_NAME}_CATKIN_BUILD_DEPENDS_EXPORTED_TARGETS ${PROJECT_NAME}_gencfg)
+      endif()
     endif()
   endif()
 endmacro()
