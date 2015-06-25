@@ -63,6 +63,8 @@ Next, this macro adds the local `include` folder and any `catkin` include direct
 
 Finally, this macro will discover and build any ROS messages, services, and actions which reside in the `msg`, `srv`, action `action` folders, respectively. The automatic discovery and building of messages/services is only done if your package `build_depend`'s on `message_generation`, and message generation will complain if your package does not run_depend on `message_runtime`.
 
+This macro discovers and builds [dynamic_reconfigure](http://wiki.ros.org/dynamic_reconfigure) config files from the `cfg` folder. The automatic discovery only works if your package `build_depend`'s on `dynamic_reconfigure`, and dynamic reconfigure will complain if your package does not run_depend on `dynamic_reconfigure`.
+
 ### cs_add_library()
 
 Next we create a library:
