@@ -36,7 +36,7 @@ macro(catkin_simple)
 
   set(${PROJECT_NAME}_CATKIN_BUILD_DEPENDS)
   set(${PROJECT_NAME}_CATKIN_BUILD_DEPENDS_EXPORTED_TARGETS)
-  foreach(dep ${${PROJECT_NAME}_BUILD_DEPENDS})
+  foreach(dep ${${PROJECT_NAME}_BUILD_DEPENDS} ${${PROJECT_NAME}_BUILDTOOL_DEPENDS})
     # If this flag is defined, add the "REQUIRED" flag
     # to all FIND_PACKAGE calls
     if(cs_args_ALL_DEPS_REQUIRED)
