@@ -18,7 +18,7 @@ set(catkin_simple_CMAKE_DIR "@(PKG_CMAKE_DIR)")
 macro(catkin_simple)
   # Arguments
   # ALL_DEPS_REQUIRED -- Add the "REQUIRED" flag when calling
-  #                      FIND_PACKAGE() for each dependency
+  #                      FIND_PACKAGE() for each build(tool) dependency
   cmake_parse_arguments(cs_args "ALL_DEPS_REQUIRED" "" "" ${ARGN})
 
   if(TARGET ${PROJECT_NAME}_package)
@@ -34,9 +34,13 @@ macro(catkin_simple)
     catkin_package_xml()
   endif()
 
-  set(${PROJECT_NAME}_CATKIN_BUILD_DEPENDS)
+  set(${PROJECT_NAME}_CATKIN_BUILD_DEPENDS)      # build depends that are found as catkin package
   set(${PROJECT_NAME}_CATKIN_BUILD_DEPENDS_EXPORTED_TARGETS)
-  foreach(dep ${${PROJECT_NAME}_BUILD_DEPENDS} ${${PROJECT_NAME}_BUILDTOOL_DEPENDS})
+  set(${PROJECT_NAME}_CMAKE_BUILD_DEPENDS)       # build depends that are found as cmake package
+  set(${PROJECT_NAME}_CMAKE_BUILD_DEPENDS_INCLUDE_DIRS)
+  set(${PROJECT_NAME}_CMAKE_BUILD_DEPENDS_LIBRARIES)
+  set(${PROJECT_NAME}_UNFOUND_BUILD_DEPENDS)     # build depends not found by find_package
+  foreach(dep ${${PROJECT_NAME}_BUILD_DEPENDS})
     # If this flag is defined, add the "REQUIRED" flag
     # to all FIND_PACKAGE calls
     if(cs_args_ALL_DEPS_REQUIRED)
@@ -45,11 +49,56 @@ macro(catkin_simple)
       find_package(${dep} QUIET)
     endif()
 
-    if(${dep}_FOUND_CATKIN_PROJECT)
-      list(APPEND ${PROJECT_NAME}_CATKIN_BUILD_DEPENDS ${dep})
-      list(APPEND ${PROJECT_NAME}_CATKIN_BUILD_DEPENDS_EXPORTED_TARGETS ${${dep}_EXPORTED_TARGETS})
+    if(${dep}_FOUND)
+      if(${dep}_FOUND_CATKIN_PROJECT)
+        list(APPEND ${PROJECT_NAME}_CATKIN_BUILD_DEPENDS ${dep})
+        list(APPEND ${PROJECT_NAME}_CATKIN_BUILD_DEPENDS_EXPORTED_TARGETS ${${dep}_EXPORTED_TARGETS})
+      else()
+        list(APPEND ${PROJECT_NAME}_CMAKE_BUILD_DEPENDS ${dep})
+        # TODO: also try ..._INCLUDE_DIR and ..._LIBRARY for compatibility to older cmake find modules.
+        list(APPEND ${PROJECT_NAME}_CMAKE_BUILD_DEPENDS_INCLUDE_DIRS ${${dep}_INCLUDE_DIRS})
+        list(APPEND ${PROJECT_NAME}_CMAKE_BUILD_DEPENDS_LIBRARIES ${${dep}_LIBRARIES})
+      endif()
+    else()
+      list(APPEND ${PROJECT_NAME}_UNFOUND_BUILD_DEPENDS ${dep})
     endif()
   endforeach()
+
+  set(${PROJECT_NAME}_CATKIN_BUILDTOOL_DEPENDS)  # buildtool depends that are found as catkin package
+  set(${PROJECT_NAME}_CMAKE_BUILDTOOL_DEPENDS)   # buildtool depends that are found as cmake package
+  set(${PROJECT_NAME}_UNFOUND_BUILDTOOL_DEPENDS) # buildtool depends not found by find_package
+  foreach(dep ${${PROJECT_NAME}_BUILDTOOL_DEPENDS})
+    # If this flag is defined, add the "REQUIRED" flag
+    # to all FIND_PACKAGE calls
+    if(cs_args_ALL_DEPS_REQUIRED)
+      find_package(${dep} REQUIRED)
+    else()
+      find_package(${dep} QUIET)
+    endif()
+
+    if(${dep}_FOUND)
+      if(${dep}_FOUND_CATKIN_PROJECT)
+        list(APPEND ${PROJECT_NAME}_CATKIN_BUILDTOOL_DEPENDS ${dep})
+      else()
+        list(APPEND ${PROJECT_NAME}_CMAKE_BUILDTOOL_DEPENDS ${dep})
+      endif()
+    else()
+        list(APPEND ${PROJECT_NAME}_UNFOUND_BUILDTOOL_DEPENDS ${dep})
+    endif()
+  endforeach()
+
+  # inform user about unfound build(tool) dependencies
+  if(${PROJECT_NAME}_UNFOUND_BUILD_DEPENDS OR ${PROJECT_NAME}_UNFOUND_BUILDTOOL_DEPENDS)
+    message(STATUS "The following dependencies are declared in package.xml but could not be found with find_package and are thus not automatically handled by catkin_simple. This is ok for non-catkin, non-cmake dependencies, but you might have to manually find the depenencies, set include directories and link to libraries.")
+    if(${PROJECT_NAME}_UNFOUND_BUILD_DEPENDS)
+      string(REPLACE ";" " " _${PROJECT_NAME}_UNFOUND_BUILD_DEPENDS_STR "${${PROJECT_NAME}_UNFOUND_BUILD_DEPENDS}")
+      message(STATUS "  unfound build dependencies: ${_${PROJECT_NAME}_UNFOUND_BUILD_DEPENDS_STR}")
+    endif()
+    if(${PROJECT_NAME}_UNFOUND_BUILDTOOL_DEPENDS)
+      string(REPLACE ";" " " _${PROJECT_NAME}_UNFOUND_BUILDTOOL_DEPENDS_STR "${${PROJECT_NAME}_UNFOUND_BUILDTOOL_DEPENDS}")
+      message(STATUS "  unfound buildtool dependencies: ${_${PROJECT_NAME}_UNFOUND_BUILDTOOL_DEPENDS_}")
+    endif()
+  endif()
 
   # Let find_package(catkin ...) do the heavy lifting
   find_package(catkin REQUIRED COMPONENTS ${${PROJECT_NAME}_CATKIN_BUILD_DEPENDS})
@@ -59,7 +108,9 @@ macro(catkin_simple)
   if(NOT IS_DIRECTORY ${${PROJECT_NAME}_LOCAL_INCLUDE_DIR})
     set(${PROJECT_NAME}_LOCAL_INCLUDE_DIR)
   endif()
-  include_directories(${${PROJECT_NAME}_LOCAL_INCLUDE_DIR} ${catkin_INCLUDE_DIRS})
+  include_directories(${${PROJECT_NAME}_LOCAL_INCLUDE_DIR}
+                      ${catkin_INCLUDE_DIRS}
+                      ${PROJECT_NAME}_CMAKE_BUILD_DEPENDS_INCLUDE_DIRS)
 
   # perform action/msg/srv generation if necessary
   if(message_generation_FOUND_CATKIN_PROJECT)
@@ -137,7 +188,7 @@ macro(cs_add_executable _target)
   cmake_parse_arguments(cs_add_executable_args "NO_AUTO_LINK;NO_AUTO_DEP" "" "" ${ARGN})
   add_executable(${_target} ${cs_add_executable_args_UNPARSED_ARGUMENTS})
   if(NOT cs_add_executable_args_NO_AUTO_LINK)
-    target_link_libraries(${_target} ${catkin_LIBRARIES})
+    target_link_libraries(${_target} ${catkin_LIBRARIES} ${PROJECT_NAME}_CMAKE_BUILD_DEPENDS_LIBRARIES)
   endif()
   if(NOT cs_add_executable_args_NO_AUTO_DEP)
     if(NOT "${${PROJECT_NAME}_CATKIN_BUILD_DEPENDS_EXPORTED_TARGETS}" STREQUAL "")
@@ -154,7 +205,7 @@ macro(cs_add_library _target)
   cmake_parse_arguments(cs_add_library "NO_AUTO_LINK;NO_AUTO_DEP;NO_AUTO_EXPORT" "" "" ${ARGN})
   add_library(${_target} ${cs_add_library_UNPARSED_ARGUMENTS})
   if(NOT cs_add_library_NO_AUTO_LINK)
-    target_link_libraries(${_target} ${catkin_LIBRARIES})
+    target_link_libraries(${_target} ${catkin_LIBRARIES} ${PROJECT_NAME}_CMAKE_BUILD_DEPENDS_LIBRARIES)
   endif()
   if(NOT cs_add_library_NO_AUTO_DEP)
     if(NOT "${${PROJECT_NAME}_CATKIN_BUILD_DEPENDS_EXPORTED_TARGETS}" STREQUAL "")
@@ -204,23 +255,83 @@ macro(cs_install_scripts)
 endmacro()
 
 macro(cs_export)
+  # Arguments
+  # ALL_DEPS_REQUIRED -- Add the "REQUIRED" flag when calling
+  #                      FIND_PACKAGE() for each build(tool)-export dependency
+  # INCLUDE_DIRS, LIBRARIES, CATKIN_DEPENDS, DEPENDS, CFG_EXTRAS
+  #                   -- Additional arguments to `catkin_package`
   cmake_parse_arguments(CS_PROJECT
-    "" "" "INCLUDE_DIRS;LIBRARIES;CATKIN_DEPENDS;DEPENDS;CFG_EXTRAS"
+    "ALL_DEPS_REQUIRED" "" "INCLUDE_DIRS;LIBRARIES;CATKIN_DEPENDS;DEPENDS;CFG_EXTRAS"
     ${ARGN})
 
-  set(${PROJECT_NAME}_CATKIN_RUN_DEPENDS)
-  foreach(dep ${${PROJECT_NAME}_RUN_DEPENDS})
-    find_package(${dep} QUIET)
-    if(${dep}_FOUND_CATKIN_PROJECT)
-      list(APPEND ${PROJECT_NAME}_CATKIN_RUN_DEPENDS ${dep})
+  set(${PROJECT_NAME}_CATKIN_BUILD_EXPORT_DEPENDS)    # build export depends that are found as catkin package
+  set(${PROJECT_NAME}_CMAKE_BUILD_EXPORT_DEPENDS)     # build export depends that are found as cmake package
+  set(${PROJECT_NAME}_UNFOUND_BUILD_EXPORT_DEPENDS) # build export depends not found with find_package
+  foreach(dep ${${PROJECT_NAME}_BUILD_EXPORT_DEPENDS})
+    # If this flag is defined, add the "REQUIRED" flag
+    # to all FIND_PACKAGE calls
+    if(CS_PROJECT_ALL_DEPS_REQUIRED)
+      find_package(${dep} REQUIRED)
+    else()
+      find_package(${dep} QUIET)
+    endif()
+
+    if(${dep}_FOUND)
+      if(${dep}_FOUND_CATKIN_PROJECT)
+        list(APPEND ${PROJECT_NAME}_CATKIN_BUILD_EXPORT_DEPENDS ${dep})
+      else()
+        list(APPEND ${PROJECT_NAME}_CMAKE_BUILD_EXPORT_DEPENDS ${dep})
+      endif()
+    else()
+      list(APPEND ${PROJECT_NAME}_UNFOUND_BUILD_EXPORT_DEPENDS ${dep})
     endif()
   endforeach()
+
+  set(${PROJECT_NAME}_CATKIN_BUILDTOOL_EXPORT_DEPENDS)    # buildtool export depends that are found as catkin package
+  set(${PROJECT_NAME}_CMAKE_BUILDTOOL_EXPORT_DEPENDS)     # buildtool export depends that are found as cmake package
+  set(${PROJECT_NAME}_UNFOUND_BUILDTOOL_EXPORT_DEPENDS) # buildtool export depends not found with find_package
+  foreach(dep ${${PROJECT_NAME}_BUILDTOOL_EXPORT_DEPENDS})
+    # If this flag is defined, add the "REQUIRED" flag
+    # to all FIND_PACKAGE calls
+    if(CS_PROJECT_ALL_DEPS_REQUIRED)
+      find_package(${dep} REQUIRED)
+    else()
+      find_package(${dep} QUIET)
+    endif()
+
+    if(${dep}_FOUND)
+      if(${dep}_FOUND_CATKIN_PROJECT)
+        list(APPEND ${PROJECT_NAME}_CATKIN_BUILDTOOL_EXPORT_DEPENDS ${dep})
+      else()
+        list(APPEND ${PROJECT_NAME}_CMAKE_BUILDTOOL_EXPORT_DEPENDS ${dep})
+      endif()
+    else()
+      list(APPEND ${PROJECT_NAME}_UNFOUND_BUILDTOOL_EXPORT_DEPENDS ${dep})
+    endif()
+  endforeach()
+
+  # inform user about unfound build(tool)-export dependencies
+  if(${PROJECT_NAME}_UNFOUND_BUILD_EXPORT_DEPENDS OR ${PROJECT_NAME}_UNFOUND_BUILDTOOL_EXPORT_DEPENDS)
+    message(STATUS "The following dependencies are declared in package.xml but could not be found with find_package and are thus not exported automatically in cs_export. This is ok for non-catkin, non-cmake dependencies, but you might have to manually find and export the include directories and libraries associated with those dependencies.")
+    if(${PROJECT_NAME}_UNFOUND_BUILD_EXPORT_DEPENDS)
+      string(REPLACE ";" " " _${PROJECT_NAME}_UNFOUND_BUILD_EXPORT_DEPENDS_STR "${${PROJECT_NAME}_UNFOUND_BUILD_EXPORT_DEPENDS}")
+      message(STATUS "  unfound build-export dependencies: ${_${PROJECT_NAME}_UNFOUND_BUILD_EXPORT_DEPENDS_STR}")
+    endif()
+    if(${PROJECT_NAME}_UNFOUND_BUILDTOOL_EXPORT_DEPENDS)
+      string(REPLACE ";" " " _${PROJECT_NAME}_UNFOUND_BUILDTOOL_EXPORT_DEPENDS_STR "${${PROJECT_NAME}_UNFOUND_BUILDTOOL_EXPORT_DEPENDS}")
+      message(STATUS "  unfound buildtool-export dependencies: ${_${PROJECT_NAME}_UNFOUND_BUILDTOOL_EXPORT_DEPENDS_}")
+    endif()
+  endif()
 
   catkin_package(
     INCLUDE_DIRS ${${PROJECT_NAME}_LOCAL_INCLUDE_DIR} ${CS_PROJECT_INCLUDE_DIRS}
     LIBRARIES ${${PROJECT_NAME}_LIBRARIES} ${CS_PROJECT_LIBRARIES}
-    CATKIN_DEPENDS ${${PROJECT_NAME}_CATKIN_RUN_DEPENDS} ${CS_PROJECT_CATKIN_DEPENDS}
-    DEPENDS ${CS_PROJECT_DEPENDS}
+    CATKIN_DEPENDS ${${PROJECT_NAME}_CATKIN_BUILD_EXPORT_DEPENDS}
+                   ${${PROJECT_NAME}_CATKIN_BUILDTOOL_EXPORT_DEPENDS}
+                   ${CS_PROJECT_CATKIN_DEPENDS}
+    DEPENDS ${${PROJECT_NAME}_CMAKE_BUILD_EXPORT_DEPENDS}
+            ${${PROJECT_NAME}_CMAKE_BUILDTOOL_EXPORT_DEPENDS}
+            ${CS_PROJECT_DEPENDS}
     CFG_EXTRAS ${CS_PROJECT_CFG_EXTRAS}
   )
 endmacro()
